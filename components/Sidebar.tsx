@@ -1,130 +1,180 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { UserRole } from '../types';
-import { 
-  HomeIcon,
-  UsersIcon,
-  CalendarDaysIcon,
-  CurrencyDollarIcon,
-  BookOpenIcon,
-  TrophyIcon,
-  MegaphoneIcon,
-  UserCircleIcon,
-  ShieldCheckIcon,
-  Logo,
-  ChatBubbleLeftRightIcon,
-  AcademicCapIcon,
-  PaperAirplaneIcon,
-  BanknotesIcon,
-  ArrowUpTrayIcon,
-  Cog6ToothIcon,
+import { Dialog, Transition } from '@headlessui/react';
+import {
   XMarkIcon,
+  HomeIcon,
+  CurrencyDollarIcon,
   ChartBarIcon,
+  UsersIcon,
+  TrophyIcon,
+  BookOpenIcon,
+  MegaphoneIcon,
+  ShieldCheckIcon,
+  UserCircleIcon,
+  Cog6ToothIcon,
   SparklesIcon,
+  DocumentDuplicateIcon,
+  ChatBubbleLeftRightIcon
 } from './icons';
-
-interface NavItem {
-  to: string;
-  icon: React.ReactElement<React.SVGProps<SVGSVGElement>>;
-  text: string;
-  roles: UserRole[];
-  hasNotification?: boolean;
-}
-
-const navigationLinks: NavItem[] = [
-  { to: '/dashboard', icon: <HomeIcon />, text: 'Dashboard', roles: ['Agent', 'Manager', 'Admin', 'Superadmin'] },
-  { to: '/admin/dashboard', icon: <HomeIcon />, text: 'Admin Dashboard', roles: ['Manager', 'Admin', 'Superadmin'] },
-  { to: '/agent-moriah', icon: <SparklesIcon />, text: 'Agent Moriah (AI)', roles: ['Agent', 'Manager', 'Admin', 'Superadmin'] },
-  { to: '/messaging', icon: <ChatBubbleLeftRightIcon />, text: 'Messaging', roles: ['Agent', 'Manager', 'Admin', 'Superadmin'] },
-  { to: '/announcements', icon: <MegaphoneIcon />, text: 'Announcements', roles: ['Agent', 'Manager', 'Admin', 'Superadmin'], hasNotification: true },
-  { to: '/team', icon: <UsersIcon />, text: 'Team Directory', roles: ['Manager', 'Admin', 'Superadmin'] },
-  { to: '/leaderboard', icon: <TrophyIcon />, text: 'Leaderboard', roles: ['Agent', 'Manager', 'Admin', 'Superadmin'] },
-  { to: '/request-tripping', icon: <PaperAirplaneIcon />, text: 'Request Tripping', roles: ['Agent', 'Manager'] },
-  { to: '/sales', icon: <CurrencyDollarIcon />, text: 'Log a Sale', roles: ['Agent', 'Manager'] },
-  { to: '/commissions', icon: <BanknotesIcon />, text: 'My Commissions', roles: ['Agent', 'Manager'] },
-  { to: '/progress', icon: <ChartBarIcon />, text: 'My Progress', roles: ['Agent', 'Manager'] },
-  { to: '/promotions', icon: <ArrowUpTrayIcon />, text: 'Apply for Promotion', roles: ['Agent', 'Manager'] },
-  { to: '/learning', icon: <AcademicCapIcon />, text: 'Learning Hub', roles: ['Agent', 'Manager', 'Admin', 'Superadmin'] },
-  { to: '/resources', icon: <BookOpenIcon />, text: 'Resources', roles: ['Agent', 'Manager', 'Admin', 'Superadmin'] },
-  { to: '/handbook', icon: <ShieldCheckIcon />, text: 'Handbook', roles: ['Agent', 'Manager', 'Admin', 'Superadmin'] },
-  { to: '/settings', icon: <Cog6ToothIcon />, text: 'Settings', roles: ['Superadmin'] },
-  { to: '/profile', icon: <UserCircleIcon />, text: 'My Profile', roles: ['Agent', 'Manager', 'Admin', 'Superadmin'] },
-];
+import { Logo } from './icons';
+import { UserRole } from '../types';
 
 interface SidebarProps {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
 }
 
-const SidebarContent: React.FC = () => {
-    const { user } = useAuth();
-    const hasNewAnnouncements = true; // This would be dynamic in a real app
-
-    const navLinkClasses = 'flex items-center px-4 py-3 text-gray-700 dark:text-gray-200 rounded-lg transition-colors duration-200 text-sm';
-    const activeClasses = 'bg-moriah-green-100 dark:bg-moriah-green-900/50 text-moriah-green-700 dark:text-moriah-green-200 font-semibold';
-    const inactiveClasses = 'hover:bg-gray-200 dark:hover:bg-gray-700';
-
-    if (!user) return null;
-
-    const visibleLinks = navigationLinks.filter(link => link.roles.includes(user.role));
-
-    return (
-        <div className="flex flex-col flex-1">
-            <div className="flex items-center justify-center h-20 shadow-md p-4 bg-white dark:bg-gray-800">
-                <Logo className="h-full w-auto" />
-            </div>
-            <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-                {visibleLinks.map(link => (
-                <NavLink
-                    key={link.to}
-                    to={link.to}
-                    className={({ isActive }) => `${navLinkClasses} ${isActive ? activeClasses : inactiveClasses}`}
-                >
-                    {React.cloneElement(link.icon, { className: 'h-6 w-6 mr-3 flex-shrink-0' })}
-                    <span className="flex-grow">{link.text}</span>
-                    {link.text === 'Announcements' && hasNewAnnouncements && (
-                    <span className="w-2.5 h-2.5 bg-yellow-400 rounded-full animate-pulse"></span>
-                    )}
-                </NavLink>
-                ))}
-            </nav>
-        </div>
-    );
+// FIX: Define a type for navigation items to include optional roles.
+interface NavigationItem {
+    name: string;
+    href: string;
+    icon: React.FC<React.SVGProps<SVGSVGElement>>;
+    roles?: UserRole[];
 }
 
+const agentNavigation: NavigationItem[] = [
+  { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
+  { name: 'My Profile', href: '/profile', icon: UserCircleIcon },
+  { name: 'Messaging', href: '/messaging', icon: ChatBubbleLeftRightIcon },
+  { name: 'Agent Moriah (AI)', href: '/ai-assistant', icon: SparklesIcon },
+  { name: 'Sales & Commissions', href: '/sales', icon: CurrencyDollarIcon },
+  { name: 'Promotion Tracker', href: '/progress', icon: ChartBarIcon },
+  { name: 'My Team', href: '/team', icon: UsersIcon },
+  { name: 'Leaderboard', href: '/leaderboard', icon: TrophyIcon },
+  { name: 'Resources', href: '/resources', icon: BookOpenIcon },
+  { name: 'Announcements', href: '/announcements', icon: MegaphoneIcon },
+  { name: 'Handbook', href: '/handbook', icon: ShieldCheckIcon },
+];
+
+const adminNavigation: NavigationItem[] = [
+    { name: 'Admin Dashboard', href: '/admin/dashboard', icon: HomeIcon },
+    { name: 'Team Directory', href: '/team', icon: UsersIcon },
+    { name: 'Performance Reports', href: '/admin/reports', icon: DocumentDuplicateIcon },
+    { name: 'Application Settings', href: '/admin/settings', icon: Cog6ToothIcon, roles: ['Superadmin'] },
+];
+
 const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
+    const { user } = useAuth();
+    
+    const navigation = user?.role === 'Agent' ? agentNavigation : adminNavigation;
+
+    const navLinkClasses = ({ isActive }: { isActive: boolean; }) => 
+        `group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+            isActive
+                ? 'bg-moriah-green-600 text-white'
+                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+        }`;
+
+    const navIconClasses = ({ isActive }: { isActive: boolean; }) => 
+        `mr-3 flex-shrink-0 h-6 w-6 transition-colors ${
+            isActive 
+                ? 'text-white' 
+                : 'text-gray-400 dark:text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-300'
+        }`;
+
+
+    const sidebarContent = (
+        <div className="flex flex-grow flex-col overflow-y-auto border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pt-5 pb-4">
+            <div className="flex flex-shrink-0 items-center px-4">
+                <Logo className="h-8 w-auto text-moriah-green-700 dark:text-moriah-green-400" />
+            </div>
+            <div className="mt-5 flex flex-grow flex-col">
+                <nav className="flex-1 space-y-1 px-2">
+                    {navigation.map((item) => {
+                        if (item.roles && user && !item.roles.includes(user.role)) {
+                            return null;
+                        }
+                        return (
+                            <NavLink
+                                key={item.name}
+                                to={item.href}
+                                className={navLinkClasses}
+                                onClick={() => setSidebarOpen(false)}
+                            >
+                                {({ isActive }) => (
+                                    <>
+                                        <item.icon
+                                            className={navIconClasses({isActive})}
+                                            aria-hidden="true"
+                                        />
+                                        {item.name}
+                                    </>
+                                )}
+                            </NavLink>
+                        )
+                    })}
+                </nav>
+            </div>
+        </div>
+    );
+
   return (
     <>
-      {/* Mobile sidebar */}
-      <div className={`fixed inset-0 flex z-40 md:hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
-        {/* Overlay */}
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)}></div>
-        
-        <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white dark:bg-gray-800">
-            <div className="absolute top-0 right-0 -mr-12 pt-2">
-                <button
-                    type="button"
-                    className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-                    onClick={() => setSidebarOpen(false)}
+        {/* Mobile sidebar */}
+        <Transition.Root show={sidebarOpen} as={Fragment}>
+            <Dialog as="div" className="relative z-40 md:hidden" onClose={setSidebarOpen}>
+                <Transition.Child
+                    as={Fragment}
+                    enter="transition-opacity ease-linear duration-300"
+                    enterFrom="opacity-0"
+                    enterTo="opacity-100"
+                    leave="transition-opacity ease-linear duration-300"
+                    leaveFrom="opacity-100"
+                    leaveTo="opacity-0"
                 >
-                    <span className="sr-only">Close sidebar</span>
-                    <XMarkIcon className="h-6 w-6 text-white" aria-hidden="true" />
-                </button>
-            </div>
-            <SidebarContent />
-        </div>
-        <div className="flex-shrink-0 w-14" aria-hidden="true">
-            {/* Dummy element to force sidebar to shrink to fit close icon */}
-        </div>
-      </div>
+                    <div className="fixed inset-0 bg-gray-600 bg-opacity-75" />
+                </Transition.Child>
 
-      {/* Static sidebar for desktop */}
-      <aside className="hidden md:flex md:flex-shrink-0">
-        <div className="flex flex-col w-64 bg-white dark:bg-gray-800 shadow-xl">
-            <SidebarContent />
+                <div className="fixed inset-0 z-40 flex">
+                    <Transition.Child
+                        as={Fragment}
+                        enter="transition ease-in-out duration-300 transform"
+                        enterFrom="-translate-x-full"
+                        enterTo="translate-x-0"
+                        leave="transition ease-in-out duration-300 transform"
+                        leaveFrom="translate-x-0"
+                        leaveTo="-translate-x-full"
+                    >
+                        <Dialog.Panel className="relative flex w-full max-w-xs flex-1 flex-col bg-white dark:bg-gray-800">
+                            <Transition.Child
+                                as={Fragment}
+                                enter="ease-in-out duration-300"
+                                enterFrom="opacity-0"
+                                enterTo="opacity-100"
+                                leave="ease-in-out duration-300"
+                                leaveFrom="opacity-100"
+                                leaveTo="opacity-0"
+                            >
+                                <div className="absolute top-0 right-0 -mr-12 pt-2">
+                                    <button
+                                        type="button"
+                                        className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                                        onClick={() => setSidebarOpen(false)}
+                                    >
+                                        <span className="sr-only">Close sidebar</span>
+                                        <XMarkIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                                    </button>
+                                </div>
+                            </Transition.Child>
+                            {sidebarContent}
+                        </Dialog.Panel>
+                    </Transition.Child>
+                    <div className="w-14 flex-shrink-0" aria-hidden="true">
+                        {/* Dummy element to force sidebar to shrink to fit close icon */}
+                    </div>
+                </div>
+            </Dialog>
+        </Transition.Root>
+
+        {/* Static sidebar for desktop */}
+        <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
+            {sidebarContent}
         </div>
-      </aside>
+        <div className="md:pl-64">
+            {/* This empty div is a spacer for the fixed sidebar */}
+        </div>
     </>
   );
 };

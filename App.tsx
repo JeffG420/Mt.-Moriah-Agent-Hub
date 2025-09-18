@@ -1,132 +1,107 @@
-import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import MainLayout from './components/MainLayout';
 import LoginPage from './components/LoginPage';
+import DashboardPage from './components/DashboardPage';
+// Agent Pages
+import AgentDashboardPage from './components/pages/AgentDashboardPage';
+import AnnouncementsPage from './components/pages/AnnouncementsPage';
+import CommissionDashboardPage from './components/pages/CommissionDashboardPage';
+import CompliancePage from './components/pages/CompliancePage';
+import HandbookPage from './components/pages/HandbookPage';
+import LeaderboardPage from './components/pages/LeaderboardPage';
+import LearningHubPage from './components/pages/LearningHubPage';
+import LogsPage from './components/pages/LogsPage';
+import MessagingPage from './components/pages/MessagingPage';
+import ProfilePage from './components/pages/ProfilePage';
+import ProgressPage from './components/pages/ProgressPage';
+import PromotionApplicationPage from './components/pages/PromotionApplicationPage';
+import ResourcesPage from './components/pages/ResourcesPage';
+import SalesPage from './components/pages/SalesPage';
+import SiteTrippingRequestPage from './components/pages/SiteTrippingRequestPage';
+import TeamPage from './components/pages/TeamPage';
+import AgentMoriahPage from './components/pages/AgentMoriahPage';
+
+// Admin Pages
+import AdminDashboardPage from './components/pages/AdminDashboardPage';
+import SettingsPage from './components/pages/SettingsPage';
+import PerformanceReportsPage from './components/pages/PerformanceReportsPage';
 import { UserRole } from './types';
 
-// Lazy load pages for better performance
-const DashboardPage = lazy(() => import('./components/pages/DashboardPage'));
-const AdminDashboardPage = lazy(() => import('./components/pages/AdminDashboardPage'));
-const ResourcesPage = lazy(() => import('./components/pages/ResourcesPage'));
-const TeamPage = lazy(() => import('./components/pages/TeamPage'));
-const LogsPage = lazy(() => import('./components/pages/LogsPage'));
-const SalesPage = lazy(() => import('./components/pages/SalesPage'));
-const ProgressPage = lazy(() => import('./components/pages/ProgressPage'));
-const LeaderboardPage = lazy(() => import('./components/pages/LeaderboardPage'));
-const AnnouncementsPage = lazy(() => import('./components/pages/AnnouncementsPage'));
-const ProfilePage = lazy(() => import('./components/pages/ProfilePage'));
-const CompliancePage = lazy(() => import('./components/pages/CompliancePage'));
-const MessagingPage = lazy(() => import('./components/pages/MessagingPage'));
-const LearningHubPage = lazy(() => import('./components/pages/LearningHubPage'));
-const SiteTrippingRequestPage = lazy(() => import('./components/pages/SiteTrippingRequestPage'));
-const CommissionDashboardPage = lazy(() => import('./components/pages/CommissionDashboardPage'));
-const HandbookPage = lazy(() => import('./components/pages/HandbookPage'));
-const SettingsPage = lazy(() => import('./components/pages/SettingsPage'));
-const PromotionApplicationPage = lazy(() => import('./components/pages/PromotionApplicationPage'));
-const AgentMoriahPage = lazy(() => import('./components/pages/AgentMoriahPage'));
-
-
-const LoadingFallback: React.FC = () => (
-    <div className="flex items-center justify-center h-screen w-screen bg-gray-100 dark:bg-gray-900">
-        <div className="text-xl font-semibold text-gray-700 dark:text-gray-300">Loading Mount Moriah Agent Hub...</div>
-    </div>
-);
-
-// Wrapper for routes that require authentication
-const PrivateRoutes: React.FC = () => {
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user, loading } = useAuth();
-    if (loading) return <LoadingFallback />;
-    if (!user) return <Navigate to="/login" replace />;
-
-    return (
-        <MainLayout>
-            <Suspense fallback={<div className="p-6 text-center text-gray-500">Loading page...</div>}>
-                <Outlet />
-            </Suspense>
-        </MainLayout>
-    );
-};
-
-// Wrapper for routes that require Admin, Manager or Superadmin role
-const AdminRoutes: React.FC<{ allowedRoles: UserRole[] }> = ({ allowedRoles }) => {
-    const { user, loading } = useAuth();
-    if (loading) return <LoadingFallback />;
-    if (!user || !allowedRoles.includes(user.role)) {
-        return <Navigate to="/dashboard" replace />;
-    }
-    return <Outlet />;
-};
-
-// Wrapper for routes that require Superadmin role
-const SuperAdminRoutes: React.FC = () => {
-    const { user, loading } = useAuth();
-    if (loading) return <LoadingFallback />;
-    if (!user || user.role !== 'Superadmin') {
-        return <Navigate to="/dashboard" replace />;
-    }
-    return <Outlet />;
-};
-
-const AppRoutes: React.FC = () => {
-    const { user, loading } = useAuth();
-
     if (loading) {
-        return <LoadingFallback />;
+        return <div className="flex items-center justify-center h-screen"><div>Loading...</div></div>;
     }
-
-    return (
-        <Routes>
-            <Route path="/login" element={<LoginPage />} />
-
-            {/* Authenticated routes */}
-            <Route element={<PrivateRoutes />}>
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/resources" element={<ResourcesPage />} />
-                <Route path="/team" element={<TeamPage />} />
-                <Route path="/logs" element={<LogsPage />} />
-                <Route path="/sales" element={<SalesPage />} />
-                <Route path="/progress" element={<ProgressPage />} />
-                <Route path="/leaderboard" element={<LeaderboardPage />} />
-                <Route path="/announcements" element={<AnnouncementsPage />} />
-                <Route path="/compliance" element={<CompliancePage />} />
-                <Route path="/messaging" element={<MessagingPage />} />
-                <Route path="/learning" element={<LearningHubPage />} />
-                <Route path="/request-tripping" element={<SiteTrippingRequestPage />} />
-                <Route path="/commissions" element={<CommissionDashboardPage />} />
-                <Route path="/handbook" element={<HandbookPage />} />
-                <Route path="/promotions" element={<PromotionApplicationPage />} />
-                <Route path="/agent-moriah" element={<AgentMoriahPage />} />
-                
-                {/* Admin, Manager & SuperAdmin Routes */}
-                <Route element={<AdminRoutes allowedRoles={['Manager', 'Admin', 'Superadmin']} />}>
-                    <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-                </Route>
-
-                {/* SuperAdmin Only Routes */}
-                <Route element={<SuperAdminRoutes />}>
-                    <Route path="/settings" element={<SettingsPage />} />
-                </Route>
-                
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            </Route>
-
-            <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
-        </Routes>
-    );
+    if (!user) {
+        return <Navigate to="/login" replace />;
+    }
+    return <>{children}</>;
 };
+
+const RoleBasedRoute: React.FC<{ children: React.ReactNode; roles: UserRole[] }> = ({ children, roles }) => {
+    const { user } = useAuth();
+    if (!user || !roles.includes(user.role)) {
+        return <Navigate to="/dashboard" replace />;
+    }
+    return <>{children}</>;
+};
+
+
+const AppRoutes: React.FC = () => (
+    <Routes>
+        <Route path="/dashboard" element={<DashboardPage />} />
+        
+        {/* Agent Routes */}
+        <Route path="/agent-dashboard" element={<AgentDashboardPage />} />
+        <Route path="/announcements" element={<AnnouncementsPage />} />
+        <Route path="/commissions" element={<CommissionDashboardPage />} />
+        <Route path="/compliance" element={<CompliancePage />} />
+        <Route path="/handbook" element={<HandbookPage />} />
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
+        <Route path="/learning" element={<LearningHubPage />} />
+        <Route path="/logs" element={<LogsPage />} />
+        <Route path="/messaging" element={<MessagingPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/progress" element={<ProgressPage />} />
+        <Route path="/promotions" element={<PromotionApplicationPage />} />
+        <Route path="/resources" element={<ResourcesPage />} />
+        <Route path="/sales" element={<SalesPage />} />
+        <Route path="/request-tripping" element={<SiteTrippingRequestPage />} />
+        <Route path="/team" element={<TeamPage />} />
+        <Route path="/ai-assistant" element={<AgentMoriahPage />} />
+
+        {/* Admin & Manager Routes */}
+        <Route path="/admin/dashboard" element={<RoleBasedRoute roles={['Manager', 'Admin', 'Superadmin']}><AdminDashboardPage /></RoleBasedRoute>} />
+        <Route path="/admin/reports" element={<RoleBasedRoute roles={['Admin', 'Superadmin']}><PerformanceReportsPage /></RoleBasedRoute>} />
+        <Route path="/admin/settings" element={<RoleBasedRoute roles={['Superadmin']}><SettingsPage /></RoleBasedRoute>} />
+
+        {/* Catch-all for protected routes */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+);
 
 
 const App: React.FC = () => {
     return (
         <AuthProvider>
-            <Suspense fallback={<LoadingFallback />}>
-                <AppRoutes />
-            </Suspense>
+            <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route
+                    path="/*"
+                    element={
+                        <ProtectedRoute>
+                            <MainLayout>
+                                <AppRoutes />
+                            </MainLayout>
+                        </ProtectedRoute>
+                    }
+                />
+            </Routes>
         </AuthProvider>
     );
 };
-
 
 export default App;
