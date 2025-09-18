@@ -1,0 +1,5 @@
+{
+  "name": "Mount Moriah Agent Hub",
+  "description": "A web application for Mount Moriah's real estate agents to access resources, track progress, and manage their team.",
+  "requestFramePermissions": []
+}
