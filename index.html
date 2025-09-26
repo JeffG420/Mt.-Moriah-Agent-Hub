@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-ag" />
+    <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mount Moriah Agent Hub</title>
@@ -29,20 +29,560 @@
         }
       }
     </script>
-  <script type="importmap">
-{
-  "imports": {
-    "react/": "https://esm.sh/react@^19.1.1/",
-    "react": "https://esm.sh/react@^19.1.1",
-    "react-dom/": "https://esm.sh/react-dom@^19.1.1/",
-    "react-router-dom": "https://esm.sh/react-router-dom@^7.7.1",
-    "@google/genai": "https://esm.sh/@google/genai",
-    "@headlessui/react": "https://aistudiocdn.com/@headlessui/react@^2.2.8"
-  }
-}
-</script>
-</head>
+    <style>
+        /* Simple class to hide/show elements */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+  </head>
   <body class="bg-gray-100 dark:bg-gray-900">
-    <div id="root"></div>
+    <!-- This single div will contain the entire application -->
+    <div id="root">
+
+      <!-- =================================================================== -->
+      <!-- LOGIN PAGE: Initially visible, hidden after login -->
+      <!-- =================================================================== -->
+      <div id="page-login">
+        <div class="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
+          <div class="w-full max-w-md p-8 space-y-8 bg-white rounded-2xl shadow-lg dark:bg-gray-800">
+            <div class="text-center">
+              <h1 class="text-3xl font-bold text-moriah-green-700 dark:text-moriah-green-400 mb-2">Mount Moriah</h1>
+              <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Agent Hub Portal</h2>
+            </div>
+            <form class="mt-8 space-y-6" id="login-form">
+              <div id="login-error" class="hidden p-3 text-sm text-red-800 bg-red-100 border border-red-300 rounded-lg dark:bg-red-900/20 dark:text-red-300 dark:border-red-600"></div>
+              <div class="space-y-4 rounded-md shadow-sm">
+                <div>
+                  <label for="agent-id" class="sr-only">Agent ID</label>
+                  <input id="agent-id" name="agent-id" type="text" autocomplete="username" required value="AG-001" class="relative block w-full px-3 py-3 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-moriah-green-500 focus:border-moriah-green-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" placeholder="Agent ID" />
+                </div>
+                <div>
+                  <label for="password" class="sr-only">Password</label>
+                  <input id="password" name="password" type="password" autocomplete="current-password" required value="password123" class="relative block w-full px-3 py-3 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-moriah-green-500 focus:border-moriah-green-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" placeholder="Password" />
+                </div>
+              </div>
+              <div>
+                <button type="submit" id="login-button" class="relative flex justify-center w-full px-4 py-3 text-sm font-medium text-white border border-transparent rounded-md group bg-moriah-green-600 hover:bg-moriah-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-moriah-green-500 transition-colors duration-300 disabled:bg-moriah-green-400 disabled:cursor-not-allowed">
+                  Sign in
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================================== -->
+      <!-- MAIN APP LAYOUT: Initially hidden, visible after login -->
+      <!-- =================================================================== -->
+      <div id="main-layout" class="hidden">
+        <div class="flex h-screen bg-gray-100 dark:bg-gray-900">
+          
+          <!-- SIDEBAR -->
+          <aside id="sidebar-container" class="md:pl-64">
+             <!-- Desktop sidebar -->
+             <div class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0" id="sidebar-desktop"></div>
+             <!-- Mobile sidebar -->
+             <div class="relative z-40 md:hidden hidden" id="sidebar-mobile-root" >
+                 <div class="fixed inset-0 bg-gray-600 bg-opacity-75 transition-opacity" id="sidebar-mobile-backdrop"></div>
+                 <div class="fixed inset-0 z-40 flex">
+                     <div class="relative flex w-full max-w-xs flex-1 flex-col bg-white dark:bg-gray-800 transition-transform -translate-x-full" id="sidebar-mobile-panel">
+                         <div class="absolute top-0 right-0 -mr-12 pt-2">
+                             <button type="button" id="sidebar-mobile-close" class="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+                                 <span class="sr-only">Close sidebar</span>
+                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-white"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                             </button>
+                         </div>
+                         <div id="sidebar-mobile-content"></div>
+                     </div>
+                     <div class="w-14 flex-shrink-0"></div>
+                 </div>
+             </div>
+          </aside>
+          
+          <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- HEADER -->
+            <header id="header-container" class="relative bg-white dark:bg-gray-800 shadow-md z-20"></header>
+
+            <!-- MAIN CONTENT -->
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 dark:bg-gray-900">
+              <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 h-full">
+                <!-- Pages will be dynamically rendered here by the router -->
+                <div id="page-content"></div>
+              </div>
+            </main>
+            
+            <!-- FOOTER -->
+            <footer class="bg-white dark:bg-gray-800 mt-auto shadow-inner">
+              <div class="container max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+                <p>&copy; 2025 Mount Moriah. All rights reserved.</p>
+                <p>Contact: (+63) 524-815-5812 | jeffdevAdmin@mountmoriah.com</p>
+              </div>
+            </footer>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- =================================================================== -->
+    <!-- JAVASCRIPT LOGIC: The entire application logic is here. -->
+    <!-- =================================================================== -->
+    <script type="module">
+        // ===================================================================
+        // DATA STORE: All mock data from the original app is stored here.
+        // ===================================================================
+        const users = [
+          { agentId: 'SA-001', name: 'Jeff Ryan Galera', location: 'Head Office', contact: '0912-345-6789', email: 'superadmin@mountmoriah.com', role: 'Superadmin', password: 'password123', team: 'Management', joinDate: '2022-01-01', avatarUrl: `https://api.dicebear.com/8.x/initials/svg?seed=Jeff%20Ryan%20Galera`, stats: { lotsSold: 150, recruits: 50, sqmSold: 30000, tenureMonths: 36, commissionEarned: 10000000 }, },
+          { agentId: 'AD-001', name: 'Admin Angela', location: 'Head Office', contact: '0912-345-6780', email: 'admin@mountmoriah.com', role: 'Admin', password: 'password123', team: 'Operations', joinDate: '2023-01-01', avatarUrl: `https://api.dicebear.com/8.x/initials/svg?seed=Admin%20Angela`, stats: { lotsSold: 0, recruits: 0, sqmSold: 0, tenureMonths: 24, commissionEarned: 0 }, },
+          { agentId: 'MG-001', name: 'Moises Buyagawan', location: 'Bonfal Proper, Bayombong, Nueva Vizcaya', contact: '0948-856-6681', email: 'moisesr7lite@gmail.com', role: 'Manager', password: 'password123', team: 'Team Alpha', joinDate: '2023-06-10', avatarUrl: `https://api.dicebear.com/8.x/initials/svg?seed=Moises%20Buyagawan`, stats: { lotsSold: 25, recruits: 15, sqmSold: 5000, tenureMonths: 14, commissionEarned: 950000 }, },
+          { agentId: 'AG-001', name: 'Angelyn Real', location: 'Solano, Nueva Vizcaya', contact: '0917-123-4567', email: 'angelyn@mountmoriah.com', role: 'Agent', password: 'password123', team: 'Team Alpha', joinDate: '2025-01-15', avatarUrl: `https://api.dicebear.com/8.x/initials/svg?seed=Angelyn%20Real`, stats: { lotsSold: 4, recruits: 8, sqmSold: 800, tenureMonths: 7, commissionEarned: 140000 }, },
+          { agentId: 'AG-002', name: 'Maricel Gargasin', location: '-', contact: '-', email: 'maricel@mountmoriah.com', role: 'Agent', password: 'password123', team: 'Team Bravo', joinDate: '2025-02-20', avatarUrl: `https://api.dicebear.com/8.x/initials/svg?seed=Maricel%20Gargasin`, stats: { lotsSold: 2, recruits: 1, sqmSold: 300, tenureMonths: 6, commissionEarned: 60000 } },
+          { agentId: 'AG-003', name: 'Ma. Cristina Perez', location: 'Solano, Nueva Vizcaya', contact: '-', email: 'cristina@mountmoriah.com', role: 'Agent', password: 'password123', team: 'Team Charlie', joinDate: '2025-03-01', avatarUrl: `https://api.dicebear.com/8.x/initials/svg?seed=Ma%20Cristina%20Perez`, stats: { lotsSold: 5, recruits: 3, sqmSold: 950, tenureMonths: 5, commissionEarned: 180000 } },
+        ];
+        const promotionCriteria = {
+            'Manager': { minLots: 5, minRecruits: 10, minSQM: 1000, tenureMonths: 6, minCommissionEarned: 150000, },
+            'Admin': { minLots: 30, minRecruits: 20, tenureMonths: 18, },
+            'Superadmin': { minLots: 100, minRecruits: 50, tenureMonths: 36, }
+        };
+        const leaders = [
+            { rank: 1, name: 'Moises Buyagawan', team: 'Team Alpha', sales: 12, color: 'bg-yellow-500' },
+            { rank: 2, name: 'Jeff Ryan Galera', team: 'Team Bravo', sales: 10, color: 'bg-gray-400' },
+            { rank: 3, name: 'Angelyn Real', team: 'Team Charlie', sales: 9, color: 'bg-yellow-700' },
+            { rank: 4, name: 'Aldrick Sagyawan', team: 'Team Alpha', sales: 7, color: 'bg-moriah-green-600' },
+            { rank: 5, name: 'Aldrin Lozano', team: 'Team Bravo', sales: 5, color: 'bg-moriah-green-600' },
+        ];
+
+
+        // ===================================================================
+        // STATE MANAGEMENT: Replaces React's `useState` and `useContext`.
+        // ===================================================================
+        const appState = {
+            currentUser: null,
+            currentPage: null,
+        };
+
+        // ===================================================================
+        // DOM ELEMENT REFERENCES: Replaces React's `useRef`.
+        // ===================================================================
+        const pageLogin = document.getElementById('page-login');
+        const mainLayout = document.getElementById('main-layout');
+        const pageContent = document.getElementById('page-content');
+        const headerContainer = document.getElementById('header-container');
+        const sidebarDesktop = document.getElementById('sidebar-desktop');
+        const sidebarMobileRoot = document.getElementById('sidebar-mobile-root');
+        const sidebarMobilePanel = document.getElementById('sidebar-mobile-panel');
+        const sidebarMobileBackdrop = document.getElementById('sidebar-mobile-backdrop');
+        const sidebarMobileContent = document.getElementById('sidebar-mobile-content');
+
+        // ===================================================================
+        // TEMPLATES & RENDER FUNCTIONS: Replaces React components.
+        // ===================================================================
+
+        function renderHeader() {
+            if (!appState.currentUser) return;
+            const { name, role } = appState.currentUser;
+            headerContainer.innerHTML = `
+              <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                  <div class="h-16 flex items-center justify-between">
+                      <div class="md:hidden">
+                          <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-moriah-green-500">
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="block h-6 w-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path></svg>
+                          </button>
+                      </div>
+                      <div class="hidden md:flex"></div>
+                      <div class="flex items-center space-x-4">
+                          <div class="relative">
+                              <select id="role-switcher" class="text-xs appearance-none bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-md pl-2 pr-6 py-1 focus:outline-none focus:ring-moriah-green-500 focus:border-moriah-green-500">
+                                  <option value="Agent">Agent</option>
+                                  <option value="Manager">Manager</option>
+                                  <option value="Admin">Admin</option>
+                                  <option value="Superadmin">Superadmin</option>
+                              </select>
+                              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-gray-700 dark:text-gray-300">
+                                  <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path></svg>
+                              </div>
+                          </div>
+                          <span class="hidden sm:inline text-gray-800 dark:text-gray-200 text-sm">Welcome, ${name.split(' ')[0]}</span>
+                          <button id="logout-button" class="flex items-center px-3 py-2 text-sm font-medium text-white bg-moriah-green-600 rounded-lg hover:bg-moriah-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-moriah-green-500 dark:focus:ring-offset-gray-800 transition-colors duration-300">
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 md:mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"></path></svg>
+                              <span class="hidden md:inline">Logout</span>
+                          </button>
+                      </div>
+                  </div>
+              </div>
+            `;
+            // Add event listeners for new elements
+            document.getElementById('logout-button').addEventListener('click', logout);
+            document.getElementById('mobile-menu-button').addEventListener('click', () => toggleSidebar(true));
+            const roleSwitcher = document.getElementById('role-switcher');
+            roleSwitcher.value = role; // Set current role
+            roleSwitcher.addEventListener('change', handleRoleChange);
+        }
+
+        function renderSidebar() {
+          if (!appState.currentUser) return;
+          const { role } = appState.currentUser;
+          const navItems = [
+              { name: 'Dashboard', href: '#/dashboard', icon: 'M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h7.5', roles: ['Agent', 'Manager', 'Admin', 'Superadmin'] },
+              { name: 'My Profile', href: '#/profile', icon: 'M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z', roles: ['Agent'] },
+              { name: 'Leaderboard', href: '#/leaderboard', icon: 'M16.5 18.75h-9a9 9 0 119 0z M12.75 3.75v1.5a2.25 2.25 0 01-4.5 0v-1.5m4.5 0h.008v.008h-.008v-.008zm-4.5 0h.008v.008h-.008v-.008z M9 12.75l.75-.75 3 3 .75-.75 M12 15v5.25 M15.75 18.75a4.5 4.5 0 00-9 0', roles: ['Agent'] },
+              { name: 'Application Settings', href: '#/admin/settings', icon: 'M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.438.995a6.473 6.473 0 010 1.912c0 .382.145.755.438.995l1.003.827c.424.35.534.954.26 1.431l-1.296 2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.127c-.332.183-.582.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.437-.995a6.473 6.473 0 010-1.912c0-.382-.145-.755-.437-.995l-1.004-.827a1.125 1.125 0 01-.26-1.431l1.296-2.247a1.125 1.125 0 011.37-.49l1.217.456c.355.133.75.072 1.076-.124.072-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281z M15 12a3 3 0 11-6 0 3 3 0 016 0z', roles: ['Superadmin'] },
+          ];
+          
+          const userNavItems = navItems.filter(item => item.roles.includes(role));
+
+          const sidebarHTML = `
+              <div class="flex flex-grow flex-col overflow-y-auto border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pt-5 pb-4">
+                  <div class="px-4 mb-5">
+                      <h1 class="text-xl font-bold text-moriah-green-700 dark:text-moriah-green-400">Mount Moriah</h1>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">Agent Hub</p>
+                  </div>
+                  <div class="flex flex-grow flex-col">
+                      <nav class="flex-1 space-y-1 px-2" id="sidebar-nav">
+                          ${userNavItems.map(item => `
+                              <a href="${item.href}" data-href="${item.href}" class="nav-link group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700">
+                                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="nav-icon mr-3 flex-shrink-0 h-6 w-6 transition-colors text-gray-400 dark:text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-300">
+                                      <path stroke-linecap="round" stroke-linejoin="round" d="${item.icon}" />
+                                  </svg>
+                                  ${item.name}
+                              </a>
+                          `).join('')}
+                      </nav>
+                  </div>
+              </div>
+          `;
+          sidebarDesktop.innerHTML = sidebarHTML;
+          sidebarMobileContent.innerHTML = sidebarHTML;
+          updateActiveLink();
+
+          // Attach event listeners to all new nav links
+          document.querySelectorAll('.nav-link').forEach(link => {
+              link.addEventListener('click', (e) => {
+                  e.preventDefault();
+                  const href = link.getAttribute('href');
+                  window.location.hash = href;
+                  toggleSidebar(false); // Close mobile sidebar on navigation
+              });
+          });
+        }
+        
+        function renderAgentDashboardPage() {
+             pageContent.innerHTML = `
+              <div>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                  Welcome, ${appState.currentUser.name.split(' ')[0]}!
+                </h1>
+                <p class="mb-8 text-lg text-gray-600 dark:text-gray-400">
+                  This is your central hub. Access all your tools and modules from here.
+                </p>
+                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                   <a href="#/leaderboard" class="block group">
+                      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300 ease-in-out flex flex-col h-full p-6 cursor-pointer border border-transparent hover:border-moriah-green-500">
+                        <div class="flex items-center space-x-4 mb-3">
+                          <div class="flex-shrink-0 bg-moriah-green-100 dark:bg-moriah-green-900/50 text-moriah-green-600 dark:text-moriah-green-300 rounded-lg p-3">
+                            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9a9 9 0 119 0z M12.75 3.75v1.5a2.25 2.25 0 01-4.5 0v-1.5m4.5 0h.008v.008h-.008v-.008zm-4.5 0h.008v.008h-.008v-.008z M9 12.75l.75-.75 3 3 .75-.75 M12 15v5.25 M15.75 18.75a4.5 4.5 0 00-9 0"></path></svg>
+                          </div>
+                          <h4 class="text-lg font-semibold text-gray-900 dark:text-white flex-grow">Leaderboard</h4>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm flex-grow">
+                          See the top performing agents and teams.
+                        </p>
+                      </div>
+                   </a>
+                 </div>
+              </div>
+            `;
+        }
+
+        function renderAdminDashboardPage() {
+             pageContent.innerHTML = `
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                        ${appState.currentUser.role} Dashboard
+                    </h1>
+                    <p class="mb-8 text-lg text-gray-600 dark:text-gray-400">
+                        Welcome, ${appState.currentUser.name}! Here's an overview of the platform's activity.
+                    </p>
+                </div>
+            `;
+        }
+        
+        function renderProfilePage() {
+            const { name, role, agentId, avatarUrl, email, contact, team, joinDate } = appState.currentUser;
+            pageContent.innerHTML = `
+              <div>
+                <div class="flex items-center mb-8">
+                  <svg class="w-10 h-10 mr-4 text-moriah-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                  <h2 class="text-3xl font-semibold text-gray-900 dark:text-white">My Profile</h2>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
+                  <div class="flex flex-col md:flex-row items-center md:space-x-8">
+                      <div class="flex-shrink-0 mb-6 md:mb-0">
+                          <img class="h-32 w-32 rounded-full ring-4 ring-moriah-green-500 object-cover bg-gray-200" src="${avatarUrl}" alt="Agent Profile" />
+                      </div>
+                      <div class="flex-grow text-center md:text-left">
+                          <h3 class="text-2xl font-bold text-gray-900 dark:text-white">${name}</h3>
+                          <p class="text-yellow-500 dark:text-yellow-400 font-semibold">${role}</p>
+                          <p class="text-sm font-mono text-gray-500 dark:text-gray-400">${agentId}</p>
+                      </div>
+                  </div>
+                  <div class="mt-8 border-t border-gray-200 dark:border-gray-700 pt-8">
+                      <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
+                          <div class="sm:col-span-1">
+                              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Email address</dt>
+                              <dd class="mt-1 text-sm text-gray-900 dark:text-white">${email}</dd>
+                          </div>
+                          <div class="sm:col-span-1">
+                              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Contact Number</dt>
+                              <dd class="mt-1 text-sm text-gray-900 dark:text-white">${contact}</dd>
+                          </div>
+                          <div class="sm:col-span-1">
+                              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Assigned Team</dt>
+                              <dd class="mt-1 text-sm text-gray-900 dark:text-white">${team}</dd>
+                          </div>
+                          <div class="sm:col-span-1">
+                              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Date Joined</dt>
+                              <dd class="mt-1 text-sm text-gray-900 dark:text-white">${joinDate}</dd>
+                          </div>
+                      </dl>
+                  </div>
+                </div>
+              </div>
+            `;
+        }
+
+        function renderLeaderboardPage() {
+            pageContent.innerHTML = `
+               <div>
+                  <div class="flex items-center mb-8">
+                      <svg class="w-10 h-10 mr-4 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9a9 9 0 119 0z M12.75 3.75v1.5a2.25 2.25 0 01-4.5 0v-1.5m4.5 0h.008v.008h-.008v-.008zm-4.5 0h.008v.008h-.008v-.008z M9 12.75l.75-.75 3 3 .75-.75 M12 15v5.25 M15.75 18.75a4.5 4.5 0 00-9 0"></path></svg>
+                      <h2 class="text-3xl font-semibold text-gray-900 dark:text-white">Agent Leaderboard</h2>
+                  </div>
+                  <div class="bg-white dark:bg-gray-800/50 p-6 rounded-xl shadow-lg">
+                      <h3 class="text-xl font-bold text-moriah-green-800 dark:text-moriah-green-400 mb-2">Top Agents of the Month</h3>
+                      <p class="text-gray-600 dark:text-gray-400 mb-6">Based on total lots sold. Rankings are updated at the end of each month.</p>
+                      <div>
+                      ${leaders.map(leader => `
+                          <div class="flex items-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-3">
+                              <div class="flex items-center justify-center w-10 h-10 rounded-full ${leader.color} text-white font-bold text-lg mr-4">
+                                  ${leader.rank}
+                              </div>
+                              <div class="flex-grow">
+                                  <p class="font-semibold text-gray-900 dark:text-white">${leader.name}</p>
+                                  <p class="text-sm text-gray-500 dark:text-gray-400">${leader.team}</p>
+                              </div>
+                              <div class="text-right">
+                                  <p class="font-bold text-lg text-moriah-green-600 dark:text-moriah-green-400">${leader.sales}</p>
+                                  <p class="text-xs text-gray-500 dark:text-gray-400">Lots Sold</p>
+                              </div>
+                          </div>
+                      `).join('')}
+                      </div>
+                  </div>
+              </div>
+            `;
+        }
+        
+        function renderSettingsPage() {
+             pageContent.innerHTML = `
+                 <div>
+                    <div class="flex items-center mb-8">
+                        <svg class="w-10 h-10 mr-4 text-moriah-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.438.995a6.473 6.473 0 010 1.912c0 .382.145.755.438.995l1.003.827c.424.35.534.954.26 1.431l-1.296 2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.127c-.332.183-.582.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.437-.995a6.473 6.473 0 010-1.912c0-.382-.145-.755-.437-.995l-1.004-.827a1.125 1.125 0 01-.26-1.431l1.296-2.247a1.125 1.125 0 011.37-.49l1.217.456c.355.133.75.072 1.076-.124.072-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281z M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <h2 class="text-3xl font-semibold text-gray-900 dark:text-white">Application Settings</h2>
+                    </div>
+                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                        <p class="text-gray-500">Settings page content goes here.</p>
+                     </div>
+                 </div>
+            `;
+        }
+
+        // ===================================================================
+        // ROUTING: Replaces `react-router-dom`.
+        // ===================================================================
+        const routes = {
+            '#/agent-dashboard': renderAgentDashboardPage,
+            '#/admin/dashboard': renderAdminDashboardPage,
+            '#/profile': renderProfilePage,
+            '#/leaderboard': renderLeaderboardPage,
+            '#/admin/settings': renderSettingsPage,
+        };
+
+        function router() {
+            const hash = window.location.hash || '#/dashboard';
+            
+            if (hash === '#/dashboard' && appState.currentUser) {
+                // Handle the main dashboard redirect logic
+                const { role } = appState.currentUser;
+                const isAdmin = ['Manager', 'Admin', 'Superadmin'].includes(role);
+                window.location.hash = isAdmin ? '#/admin/dashboard' : '#/agent-dashboard';
+                return;
+            }
+
+            const pageRenderer = routes[hash];
+            if (pageRenderer) {
+                pageRenderer();
+            } else {
+                pageContent.innerHTML = `<h1 class="text-xl text-red-500">404 - Page Not Found</h1>`;
+            }
+            updateActiveLink();
+        }
+        
+        function updateActiveLink() {
+            const hash = window.location.hash || '#/dashboard';
+            document.querySelectorAll('.nav-link').forEach(link => {
+                const linkHref = link.getAttribute('data-href');
+                const isActive = linkHref === hash || (hash === '#/agent-dashboard' && linkHref === '#/dashboard') || (hash === '#/admin/dashboard' && linkHref === '#/dashboard');
+                
+                const icon = link.querySelector('.nav-icon');
+
+                if (isActive) {
+                    link.classList.add('bg-moriah-green-600', 'text-white');
+                    link.classList.remove('text-gray-600', 'dark:text-gray-300', 'hover:bg-gray-200', 'dark:hover:bg-gray-700');
+                    if (icon) {
+                      icon.classList.add('text-white');
+                      icon.classList.remove('text-gray-400');
+                    }
+                } else {
+                    link.classList.remove('bg-moriah-green-600', 'text-white');
+                    link.classList.add('text-gray-600', 'dark:text-gray-300', 'hover:bg-gray-200', 'dark:hover:bg-gray-700');
+                    if(icon) {
+                       icon.classList.remove('text-white');
+                       icon.classList.add('text-gray-400');
+                    }
+                }
+            });
+        }
+
+        // ===================================================================
+        // AUTHENTICATION: Replaces `useAuth` hook.
+        // ===================================================================
+        function login(agentId, password) {
+          return new Promise(resolve => {
+            setTimeout(() => {
+                const foundUser = users.find(u => u.agentId.toLowerCase() === agentId.toLowerCase());
+                if (foundUser && foundUser.password === password) {
+                    const { password, ...userToStore } = foundUser;
+                    appState.currentUser = userToStore;
+                    localStorage.setItem('moriah-user', JSON.stringify(userToStore));
+                    resolve(true);
+                } else {
+                    resolve(false);
+                }
+            }, 500);
+          });
+        }
+        
+        function logout() {
+            appState.currentUser = null;
+            localStorage.removeItem('moriah-user');
+            showLoginPage();
+        }
+
+        function checkInitialAuth() {
+            const storedUser = localStorage.getItem('moriah-user');
+            if (storedUser) {
+                appState.currentUser = JSON.parse(storedUser);
+                showApp();
+            } else {
+                showLoginPage();
+            }
+        }
+        
+        // ===================================================================
+        // UI CONTROL FUNCTIONS
+        // ===================================================================
+        function showLoginPage() {
+            pageLogin.classList.remove('hidden');
+            mainLayout.classList.add('hidden');
+        }
+
+        function showApp() {
+            pageLogin.classList.add('hidden');
+            mainLayout.classList.remove('hidden');
+            renderHeader();
+            renderSidebar();
+            router();
+        }
+        
+        function toggleSidebar(open) {
+            if (open) {
+                sidebarMobileRoot.classList.remove('hidden');
+                // Use requestAnimationFrame to ensure the initial state is applied before transitioning
+                requestAnimationFrame(() => {
+                    sidebarMobileBackdrop.classList.remove('opacity-0');
+                    sidebarMobileBackdrop.classList.add('opacity-100');
+                    sidebarMobilePanel.classList.remove('-translate-x-full');
+                    sidebarMobilePanel.classList.add('translate-x-0');
+                });
+            } else {
+                sidebarMobileBackdrop.classList.remove('opacity-100');
+                sidebarMobileBackdrop.classList.add('opacity-0');
+                sidebarMobilePanel.classList.remove('translate-x-0');
+                sidebarMobilePanel.classList.add('-translate-x-full');
+                // Hide the element after transition
+                setTimeout(() => sidebarMobileRoot.classList.add('hidden'), 300);
+            }
+        }
+
+        async function handleRoleChange(event) {
+            const selectedRole = event.target.value;
+            const userCredentials = {
+                'Agent': { id: 'AG-001', pass: 'password123' },
+                'Manager': { id: 'MG-001', pass: 'password123' },
+                'Admin': { id: 'AD-001', pass: 'password123' },
+                'Superadmin': { id: 'SA-001', pass: 'password123' },
+            };
+            const creds = userCredentials[selectedRole];
+            if(creds) {
+                const success = await login(creds.id, creds.pass);
+                if (success) {
+                    showApp();
+                }
+            }
+        }
+
+        // ===================================================================
+        // INITIALIZATION & EVENT LISTENERS
+        // ===================================================================
+        
+        // Login form submission
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const agentId = document.getElementById('agent-id').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('login-error');
+            const loginButton = document.getElementById('login-button');
+
+            errorDiv.classList.add('hidden');
+            loginButton.disabled = true;
+            loginButton.textContent = 'Signing in...';
+            
+            const success = await login(agentId, password);
+
+            if (success) {
+                showApp();
+            } else {
+                errorDiv.textContent = 'Invalid Agent ID or password.';
+                errorDiv.classList.remove('hidden');
+                loginButton.disabled = false;
+                loginButton.textContent = 'Sign in';
+            }
+        });
+        
+        // Mobile sidebar close button
+        document.getElementById('sidebar-mobile-close').addEventListener('click', () => toggleSidebar(false));
+        sidebarMobileBackdrop.addEventListener('click', () => toggleSidebar(false));
+
+        // Listen for hash changes to navigate
+        window.addEventListener('hashchange', router);
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            checkInitialAuth();
+        });
+
+    </script>
   </body>
 </html>
